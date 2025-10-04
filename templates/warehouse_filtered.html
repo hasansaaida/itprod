@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4" dir="rtl">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">{{ title }}</h2>
+    <div class="no-print d-flex gap-2">
+      <a class="btn btn-outline-primary" href="{{ export_url }}">📤 ייצוא CSV</a>
+      <button class="btn btn-outline-secondary" onclick="window.print()">🖨️ הדפס</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('warehouse') }}">← חזרה למחסן</a>
+    </div>
+  </div>
+
+  <style>
+    @media print{ .no-print,.navbar,.sidebar{display:none!important;} @page{size:portrait;margin:12mm;} table{font-size:12px;} }
+  </style>
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-striped align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>שם</th>
+          <th>ספק</th>
+          <th>סטטוס</th>
+          <th>מיקום</th>
+          <th>סוג ציוד</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+          <tr>
+            <td>{{ item[1] }}</td>
+            <td>{{ item[2] }}</td>
+            <td>{{ item[3] }}</td>
+            <td>{{ item[4] }}</td>
+            <td>{{ item[5] }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

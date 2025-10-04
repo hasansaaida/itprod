@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4" dir="rtl">
+  <h2 class="mb-4 text-right">רשימת עובדים</h2>
+  <table class="table table-bordered table-striped text-right">
+    <thead class="thead-dark">
+      <tr>
+        <th>מספר עובד</th>
+        <th>שם פרטי</th>
+        <th>שם משפחה</th>
+        <th>מספר אקראי</th>
+        <th>מספר עמדה</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for emp in employees %}
+      <tr>
+        <td>{{ emp.emp_no }}</td>
+        <td>{{ emp.first_name }}</td>
+        <td>{{ emp.last_name }}</td>
+        <td>{{ emp.random_id }}</td>
+        <td>{{ emp.station_no }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

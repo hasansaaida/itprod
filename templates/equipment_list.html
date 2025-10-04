@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div dir="rtl" style="text-align:right">
+  <h3>רשימת ציוד מסוננת</h3>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>מזהה</th>
+        <th>שם</th>
+        <th>סוג</th>
+        <th>סטטוס</th>
+        <th>מיקום</th>
+        <th>ספק</th>
+        <th>ברקוד</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in equipment %}
+      <tr>
+        <td>{{ item.id }}</td>
+        <td>{{ item.name }}</td>
+        <td>{{ item.equipment_type }}</td>
+        <td>{{ item.status }}</td>
+        <td>{{ item.placement }}</td>
+        <td>{{ item.vendor }}</td>
+        <td>{{ item.barcode }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,742 @@
+{% extends 'base.html' %}
+{% block content %}
+<div dir="rtl" style="text-align:right">
+  <h3 class="mb-3">ניהול מערכת</h3>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='system.css') }}">
+  <div class="container-fluid p-0">
+    <div class="row g-3 mb-3">
+      <div class="col-12 col-lg-3"><div class="card metric text-center"><div class="card-body"><div class="text-muted">משתמשים</div><div class="h3 m-0" id="count-users">{{ counts.users }}</div></div></div></div>
+      <div class="col-12 col-lg-3"><div class="card metric text-center"><div class="card-body"><div class="text-muted">עובדים</div><div class="h3 m-0" id="count-emps">{{ counts.employees }}</div></div></div></div>
+      <div class="col-12 col-lg-3"><div class="card metric text-center"><div class="card-body"><div class="text-muted">עמדות</div><div class="h3 m-0" id="count-stations">{{ counts.stations }}</div></div></div></div>
+      <div class="col-12 col-lg-3"><div class="card metric text-center"><div class="card-body"><div class="text-muted">ספקים</div><div class="h3 m-0" id="count-vendors">{{ counts.vendors }}</div></div></div></div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-12 col-lg-3">
+        <div class="list-group">
+          <a class="list-group-item list-group-item-action active" data-target="#sec-users">ניהול משתמשים</a>
+          <a class="list-group-item list-group-item-action" data-target="#sec-employees">ניהול עובדים</a>
+          <a class="list-group-item list-group-item-action" data-target="#sec-stations">ניהול עמדות</a>
+          <a class="list-group-item list-group-item-action" data-target="#sec-vendors">ניהול ספקים</a>
+		  <a class="list-group-item list-group-item-action" data-target="#sec-equipment-types">ניהול סוגי ציוד</a>
+		  <a class="list-group-item list-group-item-action" data-target="#sec-printer-models">ניהול דגמי מדפסות</a>
+		  <a class="list-group-item list-group-item-action" data-target="#sec-import-csv">יבוא נתונים מ־CSV</a>
+			</div>
+      </div>
+      <div class="col-12 col-lg-9">
+
+        <!-- משתמשים -->
+        <section id="sec-users" class="content-section">
+          <div class="card mb-3">
+            <div class="card-header fw-bold">הוספת משתמש</div>
+            <div class="card-body">
+              <form id="f-user" class="row g-2">
+                <div class="col-md-4"><label class="form-label">שם משתמש</label><input name="username" class="form-control" required></div>
+                <div class="col-md-4"><label class="form-label">סיסמה</label><input name="password" type="password" class="form-control" required></div>
+                <div class="col-md-4"><label class="form-label">אימייל</label><input name="email" type="email" class="form-control"></div>
+                <div class="col-md-6"><label class="form-label">שיוך לעובד</label>
+                  <input id="emp-search" class="form-control" list="dl-emps" placeholder="חפש לפי שם/מס׳ עובד">
+                  <datalist id="dl-emps"></datalist>
+                  <input type="hidden" name="employee_id" id="employee_id">
+                  <div class="form-text">בחירת עובד תבצע הצעת מילוי אוטומטית לשם משתמש/אימייל</div>
+                </div>
+                <div class="col-md-3"><label class="form-label">תפקיד</label>
+                  <select name="role" class="form-select"><option value="User">User</option><option value="Admin">Admin</option></select>
+                </div>
+                <div class="col-md-3"><label class="form-label">סטטוס</label>
+                  <select name="status" class="form-select"><option value="Active" selected>Active</option><option value="Inactive">Inactive</option></select>
+                </div>
+                <div class="col-12 text-end"><button class="btn btn-primary">הוסף משתמש</button></div>
+              </form>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header fw-bold">טבלת משתמשים</div>
+            <div class="card-body">
+              <table id="tbl-users" class="table table-striped table-bordered w-100"></table>
+            </div>
+          </div>
+        </section>
+
+<!-- Modal עריכת משתמש -->
+<!-- Modal עריכת משתמש -->
+<div class="modal fade" id="modal-user" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="f-user-edit">
+        <div class="modal-header">
+          <h5 class="modal-title">עריכת משתמש</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="id" id="edit-user-id">
+
+          <div class="mb-3">
+            <label class="form-label">שם משתמש</label>
+            <input type="text" class="form-control" id="edit-user-username" name="username" disabled>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">אימייל</label>
+            <input type="email" class="form-control" id="edit-user-email" name="email">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">תפקיד</label>
+            <select class="form-select" id="edit-user-role" name="role">
+              <option>User</option>
+              <option>Admin</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">סטטוס</label>
+            <select class="form-select" id="edit-user-status" name="status">
+              <option>Active</option>
+              <option>Inactive</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">סיסמה חדשה</label>
+            <input type="password" class="form-control" id="edit-user-password" name="password" placeholder="השאר ריק אם אין שינוי">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ביטול</button>
+          <button type="submit" class="btn btn-primary">שמור</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+        <!-- עובדים -->
+        <section id="sec-employees" class="content-section" style="display:none">
+          <div class="card mb-3">
+            <div class="card-header fw-bold">הוספת עובד</div>
+            <div class="card-body">
+              <form id="f-emp" class="row g-2">
+                <div class="col-md-3"><label class="form-label">שם פרטי</label><input name="first_name" class="form-control" required></div>
+                <div class="col-md-3"><label class="form-label">שם משפחה</label><input name="last_name" class="form-control" required></div>
+                <div class="col-md-3"><label class="form-label">מס' עובד</label><input name="emp_no" class="form-control" required></div>
+                <div class="col-md-3"><label class="form-label">עמדה (לא חובה)</label><input name="station_no" class="form-control" placeholder="לדוגמה: ST-01"></div>
+                <div class="col-12 text-end"><button class="btn btn-primary">הוסף עובד</button></div>
+              </form>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header fw-bold">טבלת עובדים</div>
+            <div class="card-body">
+              <table id="tbl-emps" class="table table-striped table-bordered w-100"></table>
+            </div>
+          </div>
+        </section>
+
+        <!-- עמדות -->
+        <section id="sec-stations" class="content-section" style="display:none">
+          <div class="card mb-3">
+            <div class="card-header fw-bold">הוספת עמדה</div>
+            <div class="card-body">
+              <form id="f-st" class="row g-2">
+                <div class="col-md-4"><label class="form-label">מס' עמדה</label><input name="station_no" class="form-control" required></div>
+                <div class="col-md-8"><label class="form-label">שם תצוגה (לא חובה)</label><input name="display_name" class="form-control"></div>
+                <div class="col-12 text-end"><button class="btn btn-primary">הוסף עמדה</button></div>
+              </form>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header fw-bold">טבלת עמדות</div>
+            <div class="card-body">
+              <table id="tbl-sts" class="table table-striped table-bordered w-100"></table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ספקים -->
+        <section id="sec-vendors" class="content-section" style="display:none">
+          <div class="card mb-3">
+            <div class="card-header fw-bold">הוספת ספק</div>
+            <div class="card-body">
+              <form id="f-vendor" class="row g-2">
+				<div class="col-md-4"><label class="form-label">שם ספק</label><input name="name" class="form-control" required></div>
+				<div class="col-md-4"><label class="form-label">איש קשר</label><input name="contact_person" class="form-control"></div>
+				<div class="col-md-4"><label class="form-label">טלפון</label><input name="phone" class="form-control"></div>
+				<div class="col-md-12"><label class="form-label">אימייל</label><input name="email" type="email" class="form-control"></div>
+				<div class="col-12 text-end"><button class="btn btn-primary">הוסף ספק</button></div>
+			  </form>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header fw-bold">טבלת ספקים</div>
+            <div class="card-body">
+              <table id="tbl-vendors" class="table table-striped table-bordered w-100"></table>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+<!-- ✅ חדש – סוגי ציוד -->
+<section id="sec-equipment-types" class="content-section" style="display:none">
+  <div class="card mb-3">
+    <div class="card-header fw-bold">הוספת סוג ציוד</div>
+    <div class="card-body">
+      <form id="f-eqtype" class="row g-2">
+        <div class="col-md-6">
+          <label class="form-label">שם סוג ציוד</label>
+          <input name="name" class="form-control" required>
+        </div>
+        <div class="col-12 text-end">
+          <button class="btn btn-primary">הוסף סוג ציוד</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header fw-bold">טבלת סוגי ציוד</div>
+    <div class="card-body">
+      <table id="tbl-eqtypes" class="table table-striped table-bordered w-100"></table>
+    </div>
+  </div>
+</section>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+  
+  <!-- Modal עריכת ספק -->
+<div class="modal fade" id="modal-vendor" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form id="f-vendor-edit">
+        <div class="modal-header">
+          <h5 class="modal-title">עריכת ספק</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="id" id="edit-vendor-id">
+          <div class="mb-2"><label>שם ספק</label><input name="name" id="edit-vendor-name" class="form-control" required></div>
+          <div class="mb-2"><label>איש קשר</label><input name="contact_person" id="edit-vendor-contact" class="form-control"></div>
+          <div class="mb-2"><label>טלפון</label><input name="phone" id="edit-vendor-phone" class="form-control"></div>
+          <div class="mb-2"><label>אימייל</label><input name="email" id="edit-vendor-email" type="email" class="form-control"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ביטול</button>
+          <button type="submit" class="btn btn-primary">שמור שינויים</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+  <!-- ✅ חדש – ניהול דגמי מדפסות -->
+<section id="sec-printer-models" class="content-section" style="display:none">
+  <div class="card mb-3">
+    <div class="card-header fw-bold">הוספת דגם מדפסת</div>
+    <div class="card-body">
+      <form id="f-pmodel" class="row g-2">
+        <input type="hidden" name="id" id="pm-id">
+        <div class="col-md-4">
+          <label class="form-label">יצרן</label>
+          <input name="brand" id="pm-brand" class="form-control" list="brands" placeholder="HP / Brother / Canon / Epson ..." required>
+          <datalist id="brands">
+            <option>HP</option><option>Brother</option><option>Canon</option>
+            <option>Epson</option><option>Kyocera</option><option>Lexmark</option>
+            <option>Ricoh</option><option>Zebra</option><option>Xerox</option>
+          </datalist>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">דגם</label>
+          <input name="model" id="pm-model" class="form-control" placeholder="LaserJet Pro M404dn / HL-L2350DW / ..." required>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="pm-active" checked>
+            <label class="form-check-label" for="pm-active">פעיל</label>
+          </div>
+        </div>
+        <div class="col-12 text-end">
+          <button class="btn btn-primary" id="pm-save">שמור</button>
+          <button type="button" class="btn btn-secondary" id="pm-reset">נקה</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header fw-bold">טבלת דגמי מדפסות</div>
+    <div class="card-body">
+      <table id="tbl-pmodels" class="table table-striped table-bordered w-100"></table>
+    </div>
+  </div>
+</section>
+  
+  <!-- ✅ חדש – יבוא נתונים -->
+<section id="sec-import-csv" class="content-section" style="display:none">
+  <div class="card mb-3">
+    <div class="card-header fw-bold">יבוא נתונים מ־CSV</div>
+    <div class="card-body">
+      <form id="f-import-csv" enctype="multipart/form-data" class="mb-3">
+        <div class="mb-2">
+          <label class="form-label">בחר סוג נתונים:</label>
+          <select class="form-select" id="target" name="target" required>
+            <option value="">-- בחר --</option>
+            <option value="employees">עובדים</option>
+            <option value="stations">עמדות</option>
+            <option value="equipment">ציוד</option>
+          </select>
+        </div>
+
+        <div class="mb-2">
+          <label class="form-label">בחר קובץ CSV:</label>
+          <input type="file" name="file" id="csv-file" class="form-control" accept=".csv" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary">תצוגה מקדימה</button>
+      </form>
+
+      <div class="card">
+        <div class="card-header fw-bold">תצוגה מקדימה של נתונים</div>
+        <div class="card-body">
+          <table id="tbl-csv-preview" class="table table-striped table-bordered w-100"></table>
+          <div class="text-end mt-3">
+            <button class="btn btn-success" id="btn-load-csv" disabled>טעינת נתונים למערכת</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+  
+  <script>
+    // שינוי סקשנים בלחיצה
+    document.querySelectorAll('.list-group .list-group-item').forEach(a=>{
+      a.addEventListener('click', ()=>{
+        document.querySelectorAll('.list-group .list-group-item').forEach(x=>x.classList.remove('active'));
+        a.classList.add('active');
+        document.querySelectorAll('.content-section').forEach(s=>s.style.display='none');
+        document.querySelector(a.dataset.target).style.display='block';
+      });
+    });
+
+    const he = { sProcessing:"מעבד...", sLengthMenu:"הצג _MENU_", sZeroRecords:"לא נמצאו רשומות", sInfo:"_START_–_END_ מתוך _TOTAL_", sInfoEmpty:"0 מתוך 0", sInfoFiltered:"(מסונן מ-_MAX_)", sSearch:"חיפוש:", oPaginate:{ sFirst:"ראשון", sPrevious:"קודם", sNext:"הבא", sLast:"אחרון" } };
+
+    // DataTables עם כפתורים לימין
+    const dtUsers = $('#tbl-users').DataTable({
+      ajax: { url: '/system/api/users', dataSrc: 'data' },
+      language: he,
+      columns: [
+        {title:'ID', data:'id', width:'60px'},
+        {title:'שם משתמש', data:'username'},
+        {title:'אימייל', data:'email'},
+        {title:'תפקיד', data:'role', width:'100px'},
+        {title:'סטטוס', data:'status', width:'100px'},
+        {title:'עובד משויך', data:null, render:r=> (r.emp_no? r.emp_no+' - ' : '') + ((r.emp_first_name||'') + ' ' + (r.emp_last_name||'')), defaultContent:''},
+        {title:'נוצר ב-', data:'created_at', width:'140px'},
+        {title:'פעולות', data:null, orderable:false, width:'160px',
+         render:r=>`<div class="text-end">
+                       <button class="btn btn-sm btn-outline-primary me-1" onclick="editUser(${r.id})">ערוך</button>
+                       <button class="btn btn-sm btn-outline-danger" onclick="delUser(${r.id})">מחק</button>
+                     </div>`
+        }
+      ]
+    });
+
+
+
+// פתיחת המודל עם הנתונים של המשתמש
+// Modal bootstrap
+const modalUser = new bootstrap.Modal(document.getElementById('modal-user'));
+
+// פתיחת modal עם הנתונים של המשתמש
+window.editUser = id => {
+  const row = dtUsers.rows().data().toArray().find(r => r.id === id);
+  if (!row) return alert('משתמש לא נמצא');
+
+  $('#edit-user-id').val(row.id);
+  $('#edit-user-username').val(row.username);
+  $('#edit-user-email').val(row.email);
+  $('#edit-user-role').val(row.role);
+  $('#edit-user-status').val(row.status);
+  $('#edit-user-password').val(''); // ניקוי שדה סיסמה
+
+  modalUser.show();
+};
+
+// שמירה / עדכון המשתמש
+$('#f-user-edit').on('submit', async e => {
+  e.preventDefault();
+  const body = Object.fromEntries(new FormData(e.target).entries());
+
+  if (!body.password) delete body.password; // אם לא שינו סיסמה
+
+  try {
+    const r = await fetch(`/system/api/users/${body.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (r.ok) {
+      modalUser.hide();
+      dtUsers.ajax.reload(null,false);
+      refreshCounts();
+    } else {
+      const err = await r.json().catch(()=>({}));
+      alert(err.error || 'שמירת המשתמש נכשלה');
+    }
+  } catch(err) {
+    console.error(err);
+    alert('שגיאת תקשורת עם השרת');
+  }
+});
+
+
+
+
+
+
+    const dtEmps = $('#tbl-emps').DataTable({
+      ajax: '/system/api/employees', language: he,
+      columns: [
+        {title:'ID', data:'id', width:'60px'},
+        {title:'שם פרטי', data:'first_name'},
+        {title:'שם משפחה', data:'last_name'},
+        {title:"מס' עובד", data:'emp_no'},
+        {title:'עמדה', data:'station_no'},
+        {title:'פעולות', data:null, orderable:false, width:'160px',
+         render:r=>`<div class="text-end">
+                       <button class="btn btn-sm btn-outline-primary me-1" onclick="editEmp(${r.id})">ערוך</button>
+                       <button class="btn btn-sm btn-outline-danger" onclick="delEmp(${r.id})">מחק</button>
+                     </div>`
+        }
+      ]
+    });
+
+    const dtSts = $('#tbl-sts').DataTable({
+      ajax: '/system/api/stations', language: he,
+      columns: [
+        {title:'ID', data:'id', width:'60px'},
+        {title:"מס' עמדה", data:'station_no'},
+        {title:'שם תצוגה', data:'display_name'},
+        {title:'פעולות', data:null, orderable:false, width:'160px',
+         render:r=>`<div class="text-end">
+                       <button class="btn btn-sm btn-outline-primary me-1" onclick="editSt(${r.id})">ערוך</button>
+                       <button class="btn btn-sm btn-outline-danger" onclick="delSt(${r.id})">מחק</button>
+                     </div>`
+        }
+      ]
+    });
+
+    const dtVendors = $('#tbl-vendors').DataTable({
+  ajax: '/system/api/vendors', 
+  language: he,
+  columns: [
+    {title:'ID', data:'id', width:'60px'},
+    {title:'שם ספק', data:'name'},
+    {title:'איש קשר', data:'contact_person'},
+    {title:'טלפון', data:'phone'},
+    {title:'אימייל', data:'email'},
+    {title:'פעולות', data:null, orderable:false, width:'160px',
+      render:r=>`<div class="text-end">
+                   <button class="btn btn-sm btn-outline-primary me-1" onclick="editVendor(${r.id})">ערוך</button>
+                   <button class="btn btn-sm btn-outline-danger" onclick="delVendor(${r.id})">מחק</button>
+                 </div>`
+    }
+  ]
+});
+
+// ✅ חדש – טבלת סוגי ציוד
+const dtEqTypes = $('#tbl-eqtypes').DataTable({
+  ajax: '/system/api/equipment_types',
+  language: he,
+  columns: [
+    {title:'ID', data:'id', width:'60px'},
+    {title:'שם סוג ציוד', data:'name'},
+    {title:'פעולות', data:null, orderable:false, width:'160px',
+      render:r=>`<div class="text-end">
+                   <button class="btn btn-sm btn-outline-primary me-1" onclick="editEqType(${r.id})">ערוך</button>
+                   <button class="btn btn-sm btn-outline-danger" onclick="delEqType(${r.id})">מחק</button>
+                 </div>`
+    }
+  ]
+});
+
+$('#f-eqtype').on('submit', async e=>{
+  e.preventDefault();
+  const body=Object.fromEntries(new FormData(e.target).entries());
+  const r=await fetch('/system/api/equipment_types',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(body)
+  });
+  if(r.ok){ e.target.reset(); dtEqTypes.ajax.reload(null,false); } 
+  else alert('שמירת סוג ציוד נכשלה');
+});
+
+window.delEqType = async id=>{
+  if(!confirm('למחוק סוג ציוד?')) return;
+  const r=await fetch(`/system/api/equipment_types/${id}`,{method:'DELETE'});
+  if(r.ok){ dtEqTypes.ajax.reload(null,false); } 
+  else alert('מחיקה נכשלה');
+};
+
+window.editEqType = id=>alert('עריכת סוג ציוד #'+id); 
+// 👉 אפשר להרחיב ל־modal עריכה אמיתי, כמו שעשינו לספקים
+
+
+    // פונקציות CRUD
+    $('#f-user').on('submit', async e=>{
+      e.preventDefault();
+      const body=Object.fromEntries(new FormData(e.target).entries());
+      const r=await fetch('/system/api/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      if(r.ok){ e.target.reset(); dtUsers.ajax.reload(null,false); refreshCounts(); } else alert('שמירת משתמש נכשלה');
+    });
+
+    $('#f-emp').on('submit', async e=>{
+      e.preventDefault();
+      const body=Object.fromEntries(new FormData(e.target).entries());
+      const r=await fetch('/system/api/employees',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      if(r.ok){ e.target.reset(); dtEmps.ajax.reload(null,false); refreshCounts(); } else alert('שמירת עובד נכשלה');
+    });
+
+    $('#f-st').on('submit', async e=>{
+      e.preventDefault();
+      const body=Object.fromEntries(new FormData(e.target).entries());
+      const r=await fetch('/system/api/stations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      if(r.ok){ e.target.reset(); dtSts.ajax.reload(null,false); refreshCounts(); } else alert('שמירת עמדה נכשלה');
+    });
+
+    $('#f-vendor').on('submit', async e=>{
+      e.preventDefault();
+      const body=Object.fromEntries(new FormData(e.target).entries());
+      const r=await fetch('/system/api/vendors',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      if(r.ok){ e.target.reset(); dtVendors.ajax.reload(null,false); refreshCounts(); } else alert('שמירת ספק נכשלה');
+    });
+$('#f-vendor-edit').on('submit', async e => {
+  e.preventDefault();
+  const body = Object.fromEntries(new FormData(e.target).entries());
+  const r = await fetch(`/system/api/vendors/${body.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (r.ok) {
+    modalVendor.hide();
+    dtVendors.ajax.reload(null,false);
+    refreshCounts();
+  } else {
+    alert('שמירת הספק נכשלה');
+  }
+});
+
+    window.delUser = async id=>{ if(!confirm('למחוק משתמש?')) return; const r=await fetch(`/system/api/users/${id}`,{method:'DELETE'}); if(r.ok){ dtUsers.ajax.reload(null,false); refreshCounts(); } else alert('מחיקה נכשלה'); };
+    window.delEmp = async id=>{ if(!confirm('למחוק עובד?')) return; const r=await fetch(`/system/api/employees/${id}`,{method:'DELETE'}); if(r.ok){ dtEmps.ajax.reload(null,false); refreshCounts(); } else alert('מחיקה נכשלה'); };
+    window.delSt  = async id=>{ if(!confirm('למחוק עמדה?')) return; const r=await fetch(`/system/api/stations/${id}`,{method:'DELETE'}); if(r.ok){ dtSts.ajax.reload(null,false); refreshCounts(); } else alert('מחיקה נכשלה'); };
+    window.delVendor = async id=>{ if(!confirm('למחוק ספק?')) return; const r=await fetch(`/system/api/vendors/${id}`,{method:'DELETE'}); if(r.ok){ dtVendors.ajax.reload(null,false); refreshCounts(); } else alert('מחיקה נכשלה'); };
+
+   
+    window.editEmp = id=>alert('עריכת עובד #'+id);
+    window.editSt  = id=>alert('עריכת עמדה #'+id);
+    const modalVendor = new bootstrap.Modal(document.getElementById('modal-vendor'));
+
+window.editVendor = async id => {
+  const row = dtVendors.rows().data().toArray().find(r => r.id === id);
+  if (!row) return alert('לא נמצא הספק');
+
+  document.getElementById('edit-vendor-id').value = row.id;
+  document.getElementById('edit-vendor-name').value = row.name;
+  document.getElementById('edit-vendor-contact').value = row.contact_person;
+  document.getElementById('edit-vendor-phone').value = row.phone;
+  document.getElementById('edit-vendor-email').value = row.email;
+
+  modalVendor.show();
+};
+
+
+    async function refreshCounts(){
+      const r = await fetch('/system/api/counts');
+      if(!r.ok) return;
+      const c = await r.json();
+      document.getElementById('count-users').textContent = c.users;
+      document.getElementById('count-emps').textContent = c.employees;
+      document.getElementById('count-stations').textContent = c.stations;
+      document.getElementById('count-vendors').textContent = c.vendors;
+    }
+	
+	
+// --- ניווט סקשנים (אם אין לך כבר לוגיקה קיימת) ---
+$('.list-group .list-group-item').on('click', function() {
+  $('.list-group .list-group-item').removeClass('active');
+  $(this).addClass('active');
+  $('.content-section').hide();
+  $($(this).data('target')).show();
+});
+
+// --- DataTables: דגמי מדפסות ---
+const dtPModels = $('#tbl-pmodels').DataTable({
+  ajax: '/system/api/printer_models',    // שרת מחזיר { data: [...] }
+  language: he,                          // כמו אצלך
+  columns: [
+    { title: 'ID', data: 'id', width: '60px' },
+    { title: 'יצרן', data: 'brand' },
+    { title: 'דגם', data: 'model' },
+    { title: 'סטטוס', data: 'is_active', width: '100px', render: v => v ? '<span class="badge bg-success">פעיל</span>' : '<span class="badge bg-secondary">לא פעיל</span>' },
+    { title: 'פעולות', data: null, orderable: false, width: '180px',
+      render: r => `<div class="text-end">
+                      <button class="btn btn-sm btn-outline-primary me-1" onclick="editPModel(${r.id}, '${(r.brand||'').replace(/'/g, "\\'")}', '${(r.model||'').replace(/'/g, "\\'")}', ${r.is_active})">ערוך</button>
+                      <button class="btn btn-sm btn-outline-danger" onclick="delPModel(${r.id})">מחק</button>
+                    </div>`
+    }
+  ]
+});
+
+// --- טופס שמירה/עדכון ---
+$('#f-pmodel').on('submit', async e => {
+  e.preventDefault();
+  const id = $('#pm-id').val();
+  const payload = {
+    brand: $('#pm-brand').val().trim(),
+    model: $('#pm-model').val().trim(),
+    is_active: $('#pm-active').is(':checked')
+  };
+  if (!payload.brand || !payload.model) { alert('חובה למלא יצרן ודגם'); return; }
+
+  let r;
+  if (id) {
+    r = await fetch(`/system/api/printer_models/${id}`, {
+      method: 'PUT', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+  } else {
+    r = await fetch('/system/api/printer_models', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+  }
+
+  if (r.ok) {
+    resetPModelForm();
+    dtPModels.ajax.reload(null, false);
+  } else {
+    const err = await r.json().catch(()=>({}));
+    alert(err.error || 'שגיאה בשמירה');
+  }
+});
+
+// --- מחיקה ---
+window.delPModel = async id => {
+  if (!confirm('למחוק דגם זה?')) return;
+  const r = await fetch(`/system/api/printer_models/${id}`, {method: 'DELETE'});
+  if (r.ok) dtPModels.ajax.reload(null, false);
+  else {
+    const err = await r.json().catch(()=>({}));
+    alert(err.error || 'מחיקה נכשלה');
+  }
+};
+
+// --- עריכה (מילוי הטופס) ---
+window.editPModel = (id, brand, model, isActive) => {
+  $('#pm-id').val(id);
+  $('#pm-brand').val(brand);
+  $('#pm-model').val(model);
+  $('#pm-active').prop('checked', !!isActive);
+  $('#pm-save').text('עדכן');
+  // מעבר לסקשן אם לא גלוי
+  if ($('#sec-printer-models').is(':hidden')) {
+    $('.list-group .list-group-item').removeClass('active');
+    $(`.list-group .list-group-item[data-target="#sec-printer-models"]`).addClass('active');
+    $('.content-section').hide();
+    $('#sec-printer-models').show();
+  }
+};
+
+// --- ניקוי טופס ---
+function resetPModelForm() {
+  $('#pm-id').val('');
+  $('#pm-brand').val('');
+  $('#pm-model').val('');
+  $('#pm-active').prop('checked', true);
+  $('#pm-save').text('שמור');
+}
+$('#pm-reset').on('click', resetPModelForm);
+
+// טבלת תצוגה מקדימה
+let dtCsv;
+
+// שליחת form לתצוגה מקדימה
+$('#f-import-csv').on('submit', async e => {
+  e.preventDefault();
+
+  const formData = new FormData(e.target);  // שולח גם file וגם target
+
+  try {
+    const r = await fetch('/system/api/import_csv_preview', {
+      method: 'POST',
+      body: formData
+    });
+    if (!r.ok) throw new Error('קריאת הקובץ נכשלה');
+
+    const data = await r.json(); // { columns: [...], data: [...] }
+
+    // מחיקת טבלה קודמת אם קיימת
+    if (dtCsv) dtCsv.destroy();
+    $('#tbl-csv-preview').empty();
+
+    dtCsv = $('#tbl-csv-preview').DataTable({
+      data: data.data,
+      columns: data.columns.map(c => ({ title: c, data: c })),
+      language: he
+    });
+
+    $('#btn-load-csv').prop('disabled', false);
+
+  } catch(err) {
+    alert(err.message);
+  }
+});
+
+// טעינת הנתונים למסד
+$('#btn-load-csv').on('click', async () => {
+  if (!confirm('לטעון את הנתונים למערכת?')) return;
+
+  const form = document.getElementById('f-import-csv');
+  const formData = new FormData(form); // כולל file + target
+
+  try {
+    const r = await fetch('/system/api/import_csv_commit', {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await r.json();
+    if (r.ok && data.success) {
+      alert(`הנתונים נטענו בהצלחה (${data.imported} רשומות)`);
+      $('#btn-load-csv').prop('disabled', true);
+    } else {
+      alert(data.error || 'טעינת הנתונים נכשלה');
+    }
+  } catch(err) {
+    alert('שגיאת תקשורת עם השרת');
+  }
+});
+
+
+
+
+  </script>
+</div>
+{% endblock %}

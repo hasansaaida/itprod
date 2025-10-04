@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+{% block content %}
+<h4 class="mb-3">הוספת ציוד חדש</h4>
+<form method="post" action="{{ url_for('add_equipment') }}" class="row g-3">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+	<div class="col-md-6">
+  <label class="form-label">סוג ציוד</label>
+  <select name="equipment_type" class="form-control">
+    <option value="">בחר סוג</option>
+    {% for t in equipment_types %}
+      <option value="{{ t.id }}">{{ t.name }}</option>
+    {% endfor %}
+  </select>
+</div>
+
+  <div class="col-md-6">
+    <label class="form-label">שם ציוד</label>
+    <input name="name" class="form-control" required>
+  </div>
+  
+  <div class="col-md-6">
+  <label class="form-label">ספק</label>
+  <select name="vendor" class="form-select" required>
+    <option value="">-- בחר ספק --</option>
+    {% for v in vendors %}
+      <option value="{{ v.id }}">{{ v.name }}</option>
+    {% endfor %}
+  </select>
+</div>
+
+ 
+  <div class="col-md-4">
+    <label class="form-label">תאריך אחריות</label>
+    <input type="date" name="warranty_expiry" class="form-control">
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">סטטוס</label>
+    <select name="status" class="form-select">
+      <option value="חדש">חדש</option>
+      <option value="תקול">תקול</option>
+	  <option value="תקין">תקין</option>
+	  <option value="למחזור">למחזור</option>
+      <option value="בשימוש">בשימוש</option>
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">ברקוד</label>
+    <input name="barcode" class="form-control">
+  </div>
+  <div class="col-12">
+    <label class="form-label">היסטוריה / הערות</label>
+    <textarea name="history" class="form-control" rows="2"></textarea>
+  </div>
+
+  <div class="col-md-6">
+    <label class="form-label">עובד (חיפוש לפי שם/מס' עובד)</label>
+    <div class="lookup lookup-employee dropdown">
+      <input name="assigned_to" class="form-control lookup-input" autocomplete="off">
+      <div class="dropdown-menu p-0 shadow-sm">
+        <div class="p-2 border-bottom d-flex align-items-center gap-2">
+          <div class="spinner-border spinner-border-sm text-secondary lookup-spinner" role="status" style="display:none"></div>
+          <small class="text-muted">הקלד כדי לחפש…</small>
+        </div>
+        <div class="lookup-menu"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">עמדה</label>
+    <div class="lookup lookup-station dropdown">
+      <input name="station" class="form-control lookup-input" autocomplete="off">
+      <div class="dropdown-menu p-0 shadow-sm">
+        <div class="p-2 border-bottom d-flex align-items-center gap-2">
+          <div class="spinner-border spinner-border-sm text-secondary lookup-spinner" role="status" style="display:none"></div>
+          <small class="text-muted">הקלד כדי לחפש…</small>
+        </div>
+        <div class="lookup-menu"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">מיקום</label>
+    <select name="placement" class="form-select" id="placement">
+      <option value="" selected>—</option>
+      <option value="אצל עובד">אצל עובד</option>
+      <option value="מחסן">מחסן</option>
+      <option value="מיחזור">מיחזור</option>
+      <option value="נמכר">נמכר</option>
+    </select>
+  </div>
+  <div class="col-md-6" id="sold_to_wrap" style="display:none;">
+    <label class="form-label">נמכר למי</label>
+    <input name="sold_to" class="form-control">
+  </div>
+
+  <div class="col-12 d-flex gap-2">
+    <button class="btn btn-primary" type="submit">הוסף</button>
+    <a class="btn btn-secondary" href="{{ url_for('equipment_list') }}">חזרה</a>
+  </div>
+</form>
+
+<script>
+  const placement = document.getElementById('placement');
+  const soldWrap = document.getElementById('sold_to_wrap');
+  function toggleSold(){ soldWrap.style.display = placement.value === 'נמכר' ? 'block' : 'none'; }
+  placement.addEventListener('change', toggleSold); toggleSold();
+</script>
+
+<script>
+(function(){
+  function el(tag, cls, html){ const e=document.createElement(tag); if(cls) e.className=cls; if(html!==undefined) e.innerHTML=html; return e; }
+  function debounce(fn, ms){ let t; return function(){ clearTimeout(t); const a=arguments; t=setTimeout(()=>fn.apply(this,a), ms); }; }
+
+  function Lookup(root, opts){
+    this.root = root;
+    this.input = root.querySelector('input.lookup-input');
+    this.hidden = root.querySelector('input.lookup-hidden');
+    this.menu = root.querySelector('.lookup-menu');
+    this.spinner = root.querySelector('.lookup-spinner');
+    this.endpoint = opts.endpoint;
+    this.format = opts.format;
+    this.valueOf = opts.valueOf;
+    this.onSelected = opts.onSelected || function(){};
+    this.last = [];
+    this.bind();
+    this.search('');
+  }
+  Lookup.prototype.bind = function(){
+    const self=this;
+    function open(){ self.root.classList.add('show'); }
+    function close(){ self.root.classList.remove('show'); }
+    self.input.addEventListener('focus', open);
+    self.input.addEventListener('click', open);
+    document.addEventListener('click', function(ev){ if(!self.root.contains(ev.target)) close(); });
+    const doSearch = debounce(function(){ self.search(self.input.value.trim()); }, 200);
+    self.input.addEventListener('input', doSearch);
+  };
+  Lookup.prototype.render = function(items){
+    this.menu.innerHTML='';
+    if(!items || items.length===0){
+      this.menu.appendChild(el('div','lookup-empty','אין תוצאות'));
+      return;
+    }
+    items.forEach(item=>{
+      const a = el('a','dropdown-item lookup-item');
+      a.textContent = this.format(item);
+      a.href = '#';
+      a.addEventListener('click',(ev)=>{
+        ev.preventDefault();
+        const val = this.valueOf(item);
+        this.input.value = val;
+        if(this.hidden) this.hidden.value = val;
+        this.onSelected(item, val);
+      });
+      this.menu.appendChild(a);
+    });
+  };
+  Lookup.prototype.search = async function(q){
+    try{
+      this.spinner.style.display='inline-block';
+      const url = this.endpoint(q);
+      const res = await fetch(url, { headers: { 'Accept':'application/json' } });
+      if(!res.ok) return;
+      this.last = await res.json();
+      this.render(this.last);
+    }finally{
+      this.spinner.style.display='none';
+    }
+  };
+  window.initLookup = function(){
+    const empRoot = document.querySelector('.lookup-employee');
+    const stRoot  = document.querySelector('.lookup-station');
+    if(!empRoot || !stRoot) return;
+
+    const emp = new Lookup(empRoot, {
+      endpoint: (q)=> '/api/employees?q=' + encodeURIComponent(q||'') + (stRoot.querySelector('input.lookup-input').value.trim()?('&station_no='+encodeURIComponent(stRoot.querySelector('input.lookup-input').value.trim().split(' | ')[0])):''),
+      format: (x)=> `${x.first_name} ${x.last_name} | ${x.emp_no}`,
+      valueOf: (x)=> `${x.first_name} ${x.last_name} | ${x.emp_no}`,
+      onSelected: (item)=>{
+        if(item.station_no){
+          const stInput = stRoot.querySelector('input.lookup-input');
+          stInput.value = item.station_no;
+          emp.search('');
+        }
+      }
+    });
+
+    const st = new Lookup(stRoot, {
+      endpoint: (q)=> '/api/stations?q=' + encodeURIComponent(q||''),
+      format: (s)=> s.display_name ? `${s.station_no} | ${s.display_name}` : s.station_no,
+      valueOf: (s)=> s.station_no,
+      onSelected: async (station)=>{
+        const res = await fetch('/api/employees?station_no=' + encodeURIComponent(station.station_no), {headers:{'Accept':'application/json'}});
+        if(res.ok){
+          const arr = await res.json();
+          if(arr.length===1){
+            const e = arr[0];
+            empRoot.querySelector('input.lookup-input').value = `${e.first_name} ${e.last_name} | ${e.emp_no}`;
+          } else if(arr.length>1){
+            emp.last = arr; emp.render(arr);
+            emp.root.classList.add('show');
+          }
+        }
+      }
+    });
+  };
+})();
+</script>
+
+<script>window.addEventListener('DOMContentLoaded', ()=>{ initLookup(); });</script>
+{% endblock %}

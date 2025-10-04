@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>הקצאת טונר {{ toner.serial_number }} - {{ toner.model }}</h2>
+    <form method="post">
+	<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3">
+            <label class="form-label">בחר מדפסת</label>
+            <select name="printer_id" class="form-select" required>
+                <option value="">-- בחר מדפסת --</option>
+                {% for printer in printers %}
+                    <option value="{{ printer.id }}">{{ printer.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">שמור</button>
+        <a href="{{ url_for('toners_list') }}" class="btn btn-secondary">ביטול</a>
+    </form>
+</div>
+{% endblock %}

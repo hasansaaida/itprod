@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>רשימת טונרים</h2>
+    <a href="{{ url_for('add_toner') }}" class="btn btn-success mb-3">הוסף טונר חדש</a>
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>מס׳ סידורי</th>
+                <th>דגם</th>
+                <th>מתאים למדפסת</th>
+                <th>ספק</th>
+                <th>סטטוס</th>
+                <th>הוקצה למדפסת</th>
+                <th>פעולות</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for toner in toners %}
+            <tr>
+                <td>{{ toner.id }}</td>
+                <td>{{ toner.serial_number }}</td>
+                <td>{{ toner.model }}</td>
+                <td>{{ toner.printer_type }}</td>
+                <td>{{ toner.vendor_name or '-' }}</td>
+                <td>{{ toner.status }}</td>
+                <td>{{ toner.printer_name or '-' }}</td>
+                <td>
+                    {% if toner.status == 'InStock' %}
+                        <a href="{{ url_for('assign_toner', tid=toner.id) }}" class="btn btn-primary btn-sm">הקצה</a>
+                    {% endif %}
+                    <form action="{{ url_for('delete_toner', tid=toner.id) }}" method="post" style="display:inline;">
+                        <button type="submit" class="btn btn-danger btn-sm">מחק</button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

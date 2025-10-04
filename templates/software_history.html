@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3>היסטוריית שינויים לתוכנה #{{ software_id }}</h3>
+  <a href="{{ url_for('software_list') }}" class="btn btn-secondary mb-3">← חזרה לרשימה</a>
+
+  <div class="table-responsive">
+    <table class="table table-bordered table-striped">
+      <thead class="table-light">
+        <tr>
+          <th>שדה</th>
+          <th>ערך ישן</th>
+          <th>ערך חדש</th>
+          <th>משתמש</th>
+          <th>תאריך שינוי</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>{{ row.field_name }}</td>
+          <td>{{ row.old_value }}</td>
+          <td>{{ row.new_value }}</td>
+          <td>{{ row.changed_by }}</td>
+          <td>{{ row.changed_at }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5" class="text-center text-muted">אין שינויים עדיין</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

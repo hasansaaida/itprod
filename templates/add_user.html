@@ -1,0 +1,31 @@
+
+{% extends 'base.html' %}
+{% block content %}
+<h4 class="mb-3">הוספת משתמש חדש</h4>
+<form method="post" action="{{ url_for('add_user') }}" class="row g-3">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="col-md-6">
+    <label class="form-label">שם משתמש</label>
+    <input name="username" class="form-control" required>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">אימייל</label>
+    <input type="email" name="email" class="form-control">
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">סיסמה</label>
+    <input type="password" name="password" class="form-control" required>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label">הרשאה</label>
+    <select name="role" class="form-select">
+      <option value="User">User</option>
+      <option value="Admin">Admin</option>
+    </select>
+  </div>
+  <div class="col-12 d-flex gap-2">
+    <button class="btn btn-success" type="submit">הוסף</button>
+    <a class="btn btn-secondary" href="{{ url_for('users') }}">חזרה</a>
+  </div>
+</form>
+{% endblock %}

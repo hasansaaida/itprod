@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block content %}
+<div dir="rtl" style="text-align:right">
+  <h3 class="mb-3">דשבורד</h3>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css">
+
+  <div class="container-fluid p-0">
+    <div class="row g-3 mb-3">
+      <!-- כרטיסים קיימים -->
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card text-bg-primary h-100">
+          <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fs-4">{{ eq_count }}</div>
+              <div>פריטי ציוד</div>
+            </div>
+            <div class="display-6">📦</div>
+          </div>
+          <a class="stretched-link" href="{{ url_for('equipment_list') }}"></a>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card text-bg-success h-100">
+          <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fs-4">{{ active_users }}</div>
+              <div>משתמשים פעילים</div>
+            </div>
+            <div class="display-6">👤</div>
+          </div>
+          {% if role == 'Admin' %}
+          <a class="stretched-link" href="{{ url_for('equipment_list') }}"></a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- כרטיסים חדשים -->
+      <!-- מחשבים -->
+<div class="col-12 col-sm-6 col-lg-3">
+  <div class="card h-100 {% if computers_in_use <=2 %}text-bg-danger{% else %}text-bg-info{% endif %}">
+    <div class="card-body d-flex justify-content-between align-items-center">
+      <div>
+        <div class="fs-4">{{ computers_in_use or 0 }}</div>
+        <div>מחשבים בשימוש</div>
+      </div>
+      <div class="display-6">💻</div>
+    </div>
+    <a class="stretched-link" href="{{ url_for('equipment_filtered_list', type='מחשב', placement='מחסן', status='חדש,תקין') }}"></a>
+  </div>
+</div>
+
+<!-- מדפסות -->
+<div class="col-12 col-sm-6 col-lg-3">
+  <div class="card h-100 {% if printers_in_use <=2 %}text-bg-danger{% else %}text-bg-warning{% endif %}">
+    <div class="card-body d-flex justify-content-between align-items-center">
+      <div>
+        <div class="fs-4">{{ printers_in_use or 0 }}</div>
+        <div>מדפסות בשימוש</div>
+      </div>
+      <div class="display-6">🖨️</div>
+    </div>
+    <a class="stretched-link" href="{{ url_for('equipment_filtered_list', type='מדפסת', placement='מחסן', status='חדש,תקין') }}"></a>
+  </div>
+</div>
+
+<!-- מסכים -->
+<div class="col-12 col-sm-6 col-lg-3">
+  <div class="card h-100 {% if screens_in_stock <=2 %}text-bg-danger{% else %}text-bg-secondary{% endif %}">
+    <div class="card-body d-flex justify-content-between align-items-center">
+      <div>
+        <div class="fs-4">{{ screens_in_stock or 0 }}</div>
+        <div>מסכים במחסן</div>
+      </div>
+      <div class="display-6">🖥️</div>
+    </div>
+    <a class="stretched-link" href="{{ url_for('equipment_filtered_list', type='מסך', placement='מחסן', status='חדש,תקין') }}"></a>
+  </div>
+</div>
+
+     <div class="col-12 col-sm-6 col-lg-3">
+    <div class="card h-100 {% if last_toner_count <=1 %}text-bg-danger{% else %}text-bg-light{% endif %}">
+        <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+                <div class="fs-4">{{ last_toner_count or 0 }}</div>
+                <div>טונרים קריטיים</div>
+            </div>
+            <div class="display-6">🟨</div>
+        </div>
+        <a class="stretched-link" href="{{ url_for('toners_critical') }}"></a>
+    </div>
+</div>
+
+
+
+      <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card h-100 {% if software_expiring <=3 %}text-bg-danger{% else %}text-bg-success{% endif %}">
+          <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+              <div class="fs-4">{{ software_expiring or 0 }}</div>
+              <div>תוכנה לחידוש <3 חודשים</div>
+            </div>
+            <div class="display-6">💾</div>
+          </div>
+		   <a class="stretched-link" href="{{ url_for('software_list') }}?expiring=1"></a>
+        </div>
+      </div>
+    </div>
+
+   
+  </div>
+</div>
+{% endblock %}
+
+
+
+

@@ -1,0 +1,154 @@
+
+{% extends 'base.html' %}
+{% block content %}
+<div style="position:fixed; top:100px; right:0; width:200px; background:#f9f9f9; padding:15px; border-left:1px solid #ccc; direction:rtl;">
+  <h4 style="text-align:center;">תפריט ניהול</h4>
+  /usersניהול משתמשים</button>
+  /employeesניהול עובדים</button>
+  /stationsעמדות</button>
+</div>
+<h4 class="mb-3">הגדרות מערכת</h4>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header">ניהול משתמשים</div>
+      <div class="card-body">
+        <p class="mb-3">מעבר למסך ניהול משתמשים (הוספה/מחיקה/שינוי הרשאות).</p>
+        <a class="btn btn-warning" href="{{ url_for('users') }}">למסך ניהול משתמשים</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header">הוספת עובד</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('settings_add_employee') }}" class="row g-3">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="col-md-6">
+            <label class="form-label">שם פרטי</label>
+            <input name="first_name" class="form-control" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">שם משפחה</label>
+            <input name="last_name" class="form-control" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">מספר עובד</label>
+            <input name="emp_no" class="form-control" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">עמדה (ברירת מחדל)</label>
+            <input name="station_no" class="form-control" list="stations_list_settings" placeholder="מס' עמדה">
+            <datalist id="stations_list_settings">
+              {% for s in stations %}
+                <option value="{{ s.station_no }}">{{ s.display_name or '' }}</option>
+              {% endfor %}
+            </datalist>
+          </div>
+          <div class="col-12">
+            <button class="btn btn-success" type="submit">הוסף עובד</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">רשימת עובדים</div>
+      <div class="card-body table-responsive">
+        <table class="table table-sm align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>שם</th>
+              <th>מס' עובד</th>
+              <th>עמדה</th>
+              <th>Random ID</th>
+              <th>פעולה</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in employees %}
+            <tr>
+              <td>{{ e.id }}</td>
+              <td>{{ e.first_name }} {{ e.last_name }}</td>
+              <td>{{ e.emp_no }}</td>
+              <td>{{ e.station_no or '' }}</td>
+              <td><code>{{ e.random_id }}</code></td>
+              <td>
+                <form method="post" action="{{ url_for('settings_delete_employee', emp_id=e.id) }}" onsubmit="return confirm('למחוק את {{ e.first_name }} {{ e.last_name }}?');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-sm btn-outline-danger">מחק</button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-center text-muted">אין עובדים</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header">הוספת עמדה</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('settings_add_station') }}" class="row g-3">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="col-md-6">
+            <label class="form-label">מספר עמדה</label>
+            <input name="station_no" class="form-control" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">שם תצוגה (אופציונלי)</label>
+            <input name="display_name" class="form-control">
+          </div>
+          <div class="col-12">
+            <button class="btn btn-success" type="submit">הוסף עמדה</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header">רשימת עמדות</div>
+      <div class="card-body table-responsive">
+        <table class="table table-sm align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>מס' עמדה</th>
+              <th>שם תצוגה</th>
+              <th>פעולה</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in stations %}
+            <tr>
+              <td>{{ s.id }}</td>
+              <td>{{ s.station_no }}</td>
+              <td>{{ s.display_name or '' }}</td>
+              <td>
+                <form method="post" action="{{ url_for('settings_delete_station', st_id=s.id) }}" onsubmit="return confirm('למחוק עמדה {{ s.station_no }}?');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-sm btn-outline-danger">מחק</button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-center text-muted">אין עמדות</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

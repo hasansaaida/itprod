@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4" dir="rtl">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">מחסן</h2>
+    <div class="no-print d-flex gap-2">
+      <a class="btn btn-outline-primary" href="{{ url_for('warehouse_export') }}">📤 ייצוא CSV</a>
+      <button class="btn btn-outline-secondary" onclick="window.print()">🖨️ הדפס</button>
+    </div>
+  </div>
+
+  <style>
+    .bucket-badge { min-width:64px; display:inline-block; padding:10px 12px; border-radius:.5rem; font-weight:700; box-shadow:0 2px 6px rgba(0,0,0,.08); transition:transform .08s ease, filter .12s ease, box-shadow .12s ease; border:1px solid rgba(0,0,0,.05); }
+    a .bucket-badge:hover { transform: translateY(-1px); filter: brightness(1.03); box-shadow: 0 4px 12px rgba(0,0,0,.12); text-decoration:none!important; }
+    @media (min-width:768px){ .sticky-type{ position:sticky; right:0; background:var(--bs-body-bg,#fff); z-index:2;} thead .sticky-type{z-index:3;} }
+    @media print{ .no-print,.navbar,.sidebar{display:none!important;} @page{size:landscape;margin:10mm;} table{font-size:12px;} .bucket-badge{box-shadow:none;border:1px solid #ccc;} }
+  </style>
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle text-center">
+      <thead class="table-light">
+        <tr>
+          <th class="text-end sticky-type" style="width:240px;">סוג ציוד</th>
+          {% for b in buckets %}
+            <th>{{ b }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in types_matrix %}
+          {% set type_param = row.type_id if row.type_id is not none else 'NULL' %}
+          <tr>
+            <td class="text-end fw-semibold sticky-type">{{ row.type_name }}</td>
+            {% for b in buckets %}
+              {% set count = row.counts.get(b, 0) %}
+              {% set color = bucket_colors.get(b, 'bg-primary text-white') %}
+              <td>
+                {% if count > 0 %}
+                  <a href="{{ url_for('warehouse_filtered', type_id=type_param, bucket=b) }}" class="text-decoration-none">
+                    <div class="bucket-badge {{ color }}">{{ count }}</div>
+                  </a>
+                {% else %}
+                  <div class="bucket-badge bg-light text-muted">{{ count }}</div>
+                {% endif %}
+              </td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

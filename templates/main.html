@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="m-0">רשימת ציוד</h4>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="{{ url_for('dashboard') }}">← חזרה</a>
+    <a class="btn btn-primary" href="{{ url_for('add_equipment') }}">הוספת ציוד</a>
+  </div>
+</div>
+
+<div class="row g-2 align-items-end mb-3" dir="rtl">
+  <div class="col-sm-4">
+    <label class="form-label">חיפוש</label>
+    <input id="q" class="form-control" placeholder="שם / ספק / ברקוד">
+  </div>
+  <div class="col-sm-3">
+    <label class="form-label">סטטוס</label>
+    <select id="status" class="form-select">
+      <option value="">הכל</option>
+      <option>Active</option>
+      <option>In Repair</option>
+      <option>Retired</option>
+    </select>
+  </div>
+  <div class="col-sm-3">
+    <label class="form-label">ספק</label>
+    <input id="vendor" class="form-control" placeholder="לדוגמה: Dell">
+  </div>
+  <div class="col-sm-3">
+  <label class="form-label">סוג ציוד</label>
+  <input id="equipment_type" class="form-control" placeholder="לדוגמה: מחשב">
+</div>
+<div class="col-sm-3">
+  <label class="form-label">מיקום</label>
+  <input id="placement_filter" class="form-control" placeholder="לדוגמה: מחסן">
+</div>
+
+  <div class="col-sm-2 text-end">
+    <button id="btnExportCsv" class="btn btn-outline-secondary">CSV</button>
+    <button id="btnExportXlsx" class="btn btn-outline-secondary">Excel</button>
+  </div>
+</div>
+
+<div class="table-responsive">
+  <table id="tbl" class="table table-striped align-middle w-100">
+    <thead class="table-light">
+      <tr>
+        <th data-col="id">#</th>
+        <th data-col="name">שם</th>
+        <th data-col="vendor">ספק</th>
+        <th data-col="warranty_expiry">תאריך אחריות</th>
+        <th data-col="status">סטטוס</th>
+        <th data-col="barcode">ברקוד</th>
+        <th>עובד</th>
+        <th>עמדה</th>
+        <th>מיקום</th>
+        <th>נמכר למי</th>
+        <th data-col="equipment_type">סוג ציוד</th>
+        <th>פעולה</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<link rel="stylesheet" href="https://cdn.datatables.net/v/bs5/dt-2.0.8/datatables.min.css"/>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/v/bs5/dt-2.0.8/datatables.min.js"></script>
+
+<script>
+$(function(){
+  const $q = $('#q'),
+        $status = $('#status'),
+        $vendor = $('#vendor'),
+        $equipment_type = $('#equipment_type'),
+        $placement_filter = $('#placement_filter');
+
+  // משתמשים ב-items שהגיעו מ-Python
+  let dt = $('#tbl').DataTable({
+    paging: true,
+    pageLength: 25,
+    responsive: true,
+    searching: false,
+    order:[[0,'desc']],
+    data: {{ items|tojson|safe }},
+    columns: [
+      {data:'id'},
+      {data:'name'},
+      {data:'vendor'},
+      {data:'warranty_expiry'},
+      {data:'status'},
+      {data:'barcode'},
+      {data:'assigned_to'},
+      {data:'station'},
+      {data:'placement'},
+      {data:'sold_to'},
+      {data:'equipment_type'},
+      {data:null, orderable:false, render:(row)=>{
+        return `
+          <a class="btn btn-sm btn-outline-primary" title="עדכון" href="/equipment/edit/${row.id}">
+            <i class="bi bi-pencil-square"></i>
+          </a>
+          <a class="btn btn-sm btn-outline-success" title="תווית" href="/equipment/${row.id}/print_label">תווית</a>`;
+      }}
+    ],
+    // מרכז את כותרות הטבלה
+    "columnDefs": [
+      { className: "text-center", targets: "_all" }
+    ]
+  });
+
+  function load(){
+    const q = $q.val().toLowerCase(),
+          status = $status.val().toLowerCase(),
+          vendor = $vendor.val().toLowerCase(),
+          equipment_type = $equipment_type.val().toLowerCase(),
+          placement = $placement_filter.val().toLowerCase();
+
+    dt.clear().rows.add(
+      {{ items|tojson|safe }}.filter(row => {
+        return (!q || row.name.toLowerCase().includes(q) ||
+                      row.vendor.toLowerCase().includes(q) ||
+                      row.barcode.toLowerCase().includes(q))
+            && (!status || (row.status && row.status.toLowerCase().includes(status)))
+            && (!vendor || (row.vendor && row.vendor.toLowerCase().includes(vendor)))
+            && (!equipment_type || (row.equipment_type && row.equipment_type.toLowerCase().includes(equipment_type)))
+            && (!placement || (row.placement && row.placement.toLowerCase().includes(placement)));
+      })
+    ).draw();
+  }
+
+  $('#q,#status,#vendor,#equipment_type,#placement_filter').on('change keyup', load);
+  load();
+
+  $('#btnExportCsv').on('click', function(){
+    const params = $.param({ 
+      q: $q.val(),
+      status: $status.val(),
+      vendor: $vendor.val(),
+      equipment_type: $equipment_type.val(),
+      placement: $placement_filter.val()
+    });
+    window.location = '/export/csv?' + params;
+  });
+
+  $('#btnExportXlsx').on('click', function(){
+    const params = $.param({ 
+      q: $q.val(),
+      status: $status.val(),
+      vendor: $vendor.val(),
+      equipment_type: $equipment_type.val(),
+      placement: $placement_filter.val()
+    });
+    window.location = '/export/xlsx?' + params;
+  });
+});
+</script>
+
+
+{% endblock %}

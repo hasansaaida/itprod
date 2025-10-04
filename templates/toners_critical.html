@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+<h4>טונרים קריטיים</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>מספר סידורי</th>
+            <th>דגם</th>
+            <th>סוג מדפסת</th>
+            <th>ספק</th>
+            <th>מדפסת מוקצה</th>
+            <th>סטטוס</th>
+            <th>נוצר בתאריך</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for t in toners %}
+        <tr>
+            <td>{{ t.id }}</td>
+            <td>{{ t.serial_number }}</td>
+            <td>{{ t.model }}</td>
+            <td>{{ t.printer_type }}</td>
+            <td>{{ t.vendor }}</td>
+            <td>{{ t.assigned_printer }}</td>
+            <td>{{ t.status }}</td>
+            <td>{{ t.created_at }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="{{ url_for('dashboard') }}" class="btn btn-secondary mt-3">חזרה ללוח הבקרה</a>
+{% endblock %}

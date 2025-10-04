@@ -1,0 +1,333 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>דוחות</h2>
+
+<div class="d-flex flex-wrap gap-2 mb-2">
+  <a class="btn btn-success" href="{{ url_for('export_all', fmt='csv') }}">ייצוא כל הציוד (CSV)</a>
+  <a class="btn btn-success" href="{{ url_for('export_all', fmt='xlsx') }}">ייצוא כל הציוד (XLSX)</a>
+</div>
+
+<ul class="nav nav-tabs" id="reportsTabs" role="tablist" style="margin-top:10px">
+  <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#wide" role="tab">דוח רחב</a></li>
+  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#advanced" role="tab">דוח מתקדם</a></li>
+  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#history" role="tab">היסטוריית הקצאות</a></li>
+  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#toners_wide" role="tab">דוח טונרים</a></li>
+<li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#toners_history" role="tab">היסטוריית טונרים</a></li>
+</ul>
+
+<div class="tab-content" style="padding-top:15px">
+
+  <!-- דוח רחב -->
+  <div class="tab-pane fade show active" id="wide" role="tabpanel">
+    <form id="wideForm" class="row g-2">
+      <div class="col-md-2">
+        <label class="form-label">סוג ציוד</label>
+        <select class="form-select" name="equipment_type_id" id="wide_equipment_type_id">
+          <option value="">הכול</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">סטטוס</label>
+        <select class="form-select" name="status">
+          <option value="">הכול</option>
+          <option value="חדש">חדש</option>
+          <option value="תקין">תקין</option>
+          <option value="תקול">תקול</option>
+          <option value="למחזור">למחזור</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">מיקום/Placement</label>
+        <select class="form-select" name="placement">
+          <option value="">הכול</option>
+          <option value="מחסן">מחסן</option>
+          <option value="אצל עובד">אצל עובד</option>
+          <option value="נמכר">נמכר</option>
+          <option value="מיחזור">מיחזור</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">ספק</label>
+        <input class="form-control" name="vendor" placeholder="לדוגמה: DELL / HP">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">עובד (טקסט ב–assigned_to)</label>
+        <input class="form-control" name="assigned_to" placeholder="מס' עובד או שם מלא">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">עמדה</label>
+        <input class="form-control" name="station" placeholder="station_no">
+      </div>
+
+      <div class="col-12 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">סנן</button>
+        <a id="wideExportCsv" class="btn btn-outline-secondary">יצוא CSV</a>
+        <a id="wideExportXlsx" class="btn btn-outline-secondary">יצוא XLSX</a>
+      </div>
+    </form>
+
+    <div class="table-responsive" style="margin-top:10px">
+      <table id="wideTable" class="table table-striped table-bordered w-100">
+        <thead>
+          <tr>
+            <th>ID</th><th>שם</th><th>ספק</th><th>סוג ציוד</th>
+            <th>Barcode</th><th>סטטוס</th><th>Placement</th>
+            <th>Assigned To</th><th>Station</th><th>Warranty</th><th>עודכן</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- דוח מתקדם -->
+  <div class="tab-pane fade" id="advanced" role="tabpanel">
+    <form id="advForm" class="row g-2">
+      <div class="col-md-3">
+        <label class="form-label">שדה</label>
+        <select class="form-select" name="field">
+          <option value="vendor">vendor</option>
+          <option value="status">status</option>
+          <option value="placement">placement</option>
+          <option value="equipment_type_id">equipment_type_id</option>
+          <option value="assigned_to">assigned_to</option>
+          <option value="station">station</option>
+          <option value="warranty_expiry">warranty_expiry</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">אופרטור</label>
+        <select class="form-select" name="op">
+          <option value="eq">=</option>
+          <option value="neq">≠</option>
+          <option value="contains">מכיל</option>
+          <option value="in">IN</option>
+          <option value="between">בין (תאריכים)</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">ערך</label>
+        <input class="form-control" name="value" placeholder="ערך/ים (פסיק מפריד)">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">ערך 2 (ל־between)</label>
+        <input class="form-control" name="value2" placeholder="yyyy-mm-dd">
+      </div>
+      <div class="col-md-2 d-flex align-items-end gap-2">
+        <button type="submit" class="btn btn-primary">הרץ</button>
+        <a id="advExportCsv" class="btn btn-outline-secondary">CSV</a>
+        <a id="advExportXlsx" class="btn btn-outline-secondary">XLSX</a>
+      </div>
+    </form>
+
+    <div class="table-responsive" style="margin-top:10px">
+      <table id="advTable" class="table table-striped table-bordered w-100">
+        <thead>
+          <tr>
+            <th>ID</th><th>שם</th><th>ספק</th><th>סוג ציוד</th>
+            <th>Barcode</th><th>סטטוס</th><th>Placement</th>
+            <th>Assigned To</th><th>Station</th><th>Warranty</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- היסטוריית הקצאות -->
+  <div class="tab-pane fade" id="history" role="tabpanel">
+    <form id="histForm" class="row g-2">
+      <div class="col-md-3">
+        <label class="form-label">עובד (לפי assigned_to)</label>
+        <input class="form-control" name="employee" placeholder="מס' עובד או שם מלא">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">עמדה</label>
+        <input class="form-control" name="station" placeholder="station_no">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">מתאריך</label>
+        <input class="form-control" type="date" name="from">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">עד תאריך</label>
+        <input class="form-control" type="date" name="to">
+      </div>
+      <div class="col-md-2 d-flex align-items-end gap-2">
+        <button class="btn btn-primary" type="submit">חפש</button>
+        <a id="histExportCsv" class="btn btn-outline-secondary">CSV</a>
+        <a id="histExportXlsx" class="btn btn-outline-secondary">XLSX</a>
+      </div>
+    </form>
+
+    <div class="table-responsive" style="margin-top:10px">
+      <table id="histTable" class="table table-striped table-bordered w-100">
+        <thead>
+          <tr>
+            <th>מזהה פריט</th><th>שם פריט</th><th>פעולה</th><th>שונה ע״י</th><th>נכון ל־</th>
+<th>Assigned To (לפני)</th><th>Assigned To (אחרי)</th><th>Station (לפני)</th><th>Station (אחרי)</th>
+
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+
+<!-- Toners -->
+<!-- Wide Tab -->
+<div class="tab-pane fade" id="toners_wide" role="tabpanel">
+  <form id="tonersWideForm" class="row g-2 mb-2">
+    <div class="col-md-3">
+      <label class="form-label">Assigned Printer</label>
+      <input class="form-control" name="assigned_printer" placeholder="מספר או שם מדפסת">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Status</label>
+      <select class="form-select" name="status">
+        <option value="">הכול</option>
+        <option value="Assigned">Assigned</option>
+        <option value="InStock">InStock</option>
+      </select>
+    </div>
+    <div class="col-md-2 d-flex align-items-end gap-2">
+      <button type="submit" class="btn btn-primary">סנן</button>
+    </div>
+  </form>
+  <div class="d-flex gap-2 mb-2">
+    <a class="btn btn-success" id="tonersWideCsv">Export CSV</a>
+    <a class="btn btn-success" id="tonersWideXlsx">Export XLSX</a>
+  </div>
+  <table id="tonersWideTable" class="table table-striped table-bordered w-100">
+    <thead>
+      <tr>
+        <th>ID</th><th>Serial Number</th><th>Model</th><th>Printer Type</th>
+        <th>Vendor ID</th><th>Assigned Printer</th><th>Status</th>
+        <th>Created At</th><th>Last Updated</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<!-- History Tab -->
+<div class="tab-pane fade" id="toners_history" role="tabpanel">
+  <form id="tonersHistForm" class="row g-2 mb-2">
+    <div class="col-md-3">
+      <label class="form-label">Assigned Printer</label>
+      <input class="form-control" name="assigned_printer" placeholder="מספר או שם מדפסת">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">Status</label>
+      <select class="form-select" name="status">
+        <option value="">הכול</option>
+        <option value="Assigned">Assigned</option>
+        <option value="InStock">InStock</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">From</label>
+      <input class="form-control" type="date" name="from">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">To</label>
+      <input class="form-control" type="date" name="to">
+    </div>
+    <div class="col-md-2 d-flex align-items-end gap-2">
+      <button class="btn btn-primary" type="submit">חפש</button>
+    </div>
+  </form>
+  <div class="d-flex gap-2 mb-2">
+    <a class="btn btn-success" id="tonersHistCsv">Export CSV</a>
+    <a class="btn btn-success" id="tonersHistXlsx">Export XLSX</a>
+  </div>
+  <table id="tonersHistTable" class="table table-striped table-bordered w-100">
+    <thead>
+      <tr>
+        <th>ID</th><th>Serial Number</th><th>Model</th><th>Action</th>
+        <th>Changed By</th><th>Changed At</th>
+        <th>Assigned (Before)</th><th>Assigned (After)</th>
+        <th>Status (Before)</th><th>Status (After)</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+</div>
+
+<!-- ספריות (ניתן להתאים ל-CDN/סטטי שלך) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.10/css/dataTables.bootstrap5.min.css">
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net@1.13.10/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.10/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+(async function(){
+
+  // --- Fill equipment types for wide form ---
+  const fillTypes = async () => {
+    try {
+      const res = await fetch('/system/api/equipment_types');
+      const data = await res.json();
+      const sel = document.getElementById('wide_equipment_type_id');
+      (data.data || []).forEach(it => {
+        const o = document.createElement('option');
+        o.value = it.id; o.textContent = it.name; sel.appendChild(o);
+      });
+    } catch(e){ console.error(e); }
+  };
+
+  await fillTypes();
+
+  // --- Initialize DataTables ---
+  const wideDT = $('#wideTable').DataTable({paging:true, searching:false, order:[[0,'desc']]});
+  const advDT  = $('#advTable').DataTable({paging:true, searching:false, order:[[0,'desc']]});
+  const histDT = $('#histTable').DataTable({paging:true, searching:false, order:[[3,'desc']]});
+  const tonersWideDT = $('#tonersWideTable').DataTable({paging:true, searching:true, order:[[0,'desc']]});
+  const tonersHistDT = $('#tonersHistTable').DataTable({paging:true, searching:true, order:[[5,'desc']]});
+
+  // --- Helper: Load table data ---
+  const loadTable = async (url, form, dt, csvId, xlsxId) => {
+    const qs = form ? new URLSearchParams(new FormData(form)).toString() : '';
+    const res = await fetch(url + (qs ? '?'+qs : ''));
+    const rows = await res.json();
+    dt.clear().rows.add(rows).draw();
+    if(csvId)  document.getElementById(csvId).href  = url.replace('/api/','/export/').replace(/\/$/, '') + '/csv?' + qs;
+    if(xlsxId) document.getElementById(xlsxId).href = url.replace('/api/','/export/').replace(/\/$/, '') + '/xlsx?' + qs;
+  };
+
+  // --- Form submits ---
+  $('#wideForm').on('submit', e => { e.preventDefault(); loadTable('/reports/api/wide', e.target, wideDT, 'wideExportCsv','wideExportXlsx'); });
+  $('#advForm').on('submit', e => { e.preventDefault(); loadTable('/reports/api/advanced', e.target, advDT, 'advExportCsv','advExportXlsx'); });
+  $('#histForm').on('submit', e => { e.preventDefault(); loadTable('/reports/api/history', e.target, histDT, 'histExportCsv','histExportXlsx'); });
+  $('#tonersWideForm').on('submit', e => { e.preventDefault(); loadTable('/reports/api/toners/wide', e.target, tonersWideDT, 'tonersWideCsv','tonersWideXlsx'); });
+  $('#tonersHistForm').on('submit', e => { e.preventDefault(); loadTable('/reports/api/toners/history', e.target, tonersHistDT, 'tonersHistCsv','tonersHistXlsx'); });
+
+  // --- Initial load ---
+  await loadTable('/reports/api/wide', document.getElementById('wideForm'), wideDT, 'wideExportCsv','wideExportXlsx');
+  await loadTable('/reports/api/advanced', null, advDT, 'advExportCsv','advExportXlsx'); // בלי פרמטרים
+  await loadTable('/reports/api/history', null, histDT, 'histExportCsv','histExportXlsx');
+  await loadTable('/reports/api/toners/wide', null, tonersWideDT, 'tonersWideCsv','tonersWideXlsx');
+  await loadTable('/reports/api/toners/history', null, tonersHistDT, 'tonersHistCsv','tonersHistXlsx');
+
+  // --- Preserve active tab on reload ---
+  $('a[data-bs-toggle="tab"]').on('shown.bs.tab', function(e){
+    const tabId = $(e.target).attr('href').substring(1);
+    history.replaceState(null,'','?tab='+tabId);
+  });
+
+  const params = new URLSearchParams(window.location.search);
+  const tab = params.get('tab');
+  if(tab){
+    const triggerEl = document.querySelector('#reportsTabs a[href="#'+tab+'"]');
+    if(triggerEl) new bootstrap.Tab(triggerEl).show();
+  }
+
+})();
+</script>
+
+{% endblock %}

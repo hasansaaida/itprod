@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4" dir="rtl">
+  <h2 class="mb-4 text-right">רשימת עמדות</h2>
+  <table class="table table-bordered table-striped text-right">
+    <thead class="thead-dark">
+      <tr>
+        <th>מספר עמדה</th>
+        <th>שם תצוגה</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for st in stations %}
+      <tr>
+        <td>{{ st.station_no }}</td>
+        <td>{{ st.display_name }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,5 @@
+Flask>=2.2
+pyodbc>=4.0.35
+python-dotenv>=1.0.0
+Flask-WTF>=1.1.1
+Werkzeug>=2.2

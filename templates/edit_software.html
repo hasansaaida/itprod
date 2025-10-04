@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2>עריכת תוכנה</h2>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    
+    <div class="mb-3">
+      <label class="form-label">שם התוכנה</label>
+      <input type="text" name="name" class="form-control" value="{{ software.name }}" required>
+    </div>
+    
+    <div class="mb-3">
+      <label class="form-label">פירוט</label>
+      <textarea name="description" class="form-control">{{ software.description }}</textarea>
+    </div>
+    
+    <div class="mb-3">
+      <label class="form-label">קטגוריה</label>
+      <select name="category" class="form-select">
+        <option value="">-- בחר קטגוריה --</option>
+        {% for cat in ["סייבר","סיסטם","רצפת ייצור","תפעול","ERP","כללי","אחר"] %}
+          <option value="{{ cat }}" {% if software.category == cat %}selected{% endif %}>{{ cat }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    
+    <div class="mb-3">
+      <label class="form-label">תאריך רכישה</label>
+      <input type="date" name="purchase_date" class="form-control" value="{{ software.purchase_date }}">
+    </div>
+    
+    <div class="mb-3">
+      <label class="form-label">חברות בנות</label>
+      <div class="d-flex flex-wrap gap-2">
+        {% for sub in ["גניגר","ניר יצחק","הודו","איטליה","ספרד","ברזיל","ארה\"ב"] %}
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="subsidiaries" value="{{ sub }}" id="sub_{{ loop.index }}"
+              {% if sub in (software.subsidiaries or '').split(',') %}checked{% endif %}>
+            <label class="form-check-label" for="sub_{{ loop.index }}">{{ sub }}</label>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    
+    <div class="row">
+      <div class="col mb-3">
+        <label class="form-label">חידוש אחרון</label>
+        <input type="date" name="renewal_last" class="form-control" value="{{ software.renewal_last }}">
+      </div>
+      <div class="col mb-3">
+        <label class="form-label">חידוש הבא</label>
+        <input type="date" name="renewal_next" class="form-control" value="{{ software.renewal_next }}">
+      </div>
+    </div>
+    
+    <div class="mb-3">
+      <label class="form-label">עלות אחרונה</label>
+      <input type="number" step="0.01" name="last_cost" class="form-control" value="{{ software.last_cost }}">
+    </div>
+
+    <button type="submit" class="btn btn-success">שמור</button>
+    <a href="{{ url_for('software_list') }}" class="btn btn-secondary">ביטול</a>
+  </form>
+
+  <hr>
+  <h4>היסטוריית שינויים</h4>
+  <ul>
+    {% for hist in history %}
+      <li>{{ hist.changed_at }} – {{ hist.change_description }} (שדה: {{ hist.field_name }}, משתמש: {{ hist.changed_by }})</li>
+    {% else %}
+      <li>אין היסטוריה</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="m-0">רשימת תוכנות</h4>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="{{ url_for('dashboard') }}">← חזרה</a>
+    <a class="btn btn-primary" href="{{ url_for('add_software') }}">הוספת תוכנה</a>
+  </div>
+</div>
+
+<div class="row g-2 align-items-end mb-3">
+  <div class="col-sm-3">
+    <label class="form-label">חיפוש</label>
+    <input id="q" class="form-control" placeholder="שם / קטגוריה">
+  </div>
+  <div class="col-sm-3">
+    <label class="form-label">חברות בנות</label>
+    <select id="subsidiariesFilter" class="form-select" multiple>
+      <option value="גניגר">גניגר</option>
+      <option value="ניר יצחק">ניר יצחק</option>
+      <option value="הודו">הודו</option>
+      <option value="איטליה">איטליה</option>
+      <option value="ספרד">ספרד</option>
+      <option value="ברזיל">ברזיל</option>
+      <option value="ארה"ב">ארה"ב</option>
+    </select>
+  </div>
+</div>
+
+<div class="table-responsive">
+  <table id="tbl" class="table table-striped align-middle w-100">
+    <thead class="table-light">
+      <tr>
+        <th>#</th>
+        <th>שם</th>
+        <th>פירוט</th>
+        <th>קטגוריה</th>
+        <th>תאריך רכישה</th>
+        <th>חברות בנות</th>
+        <th>חידוש אחרון</th>
+        <th>חידוש הבא</th>
+        <th>עלות אחרונה</th>
+        <th>פעולות</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<!-- Modal היסטוריה -->
+<div class="modal fade" id="historyModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">היסטוריית תוכנה</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <table class="table table-striped" id="historyTable">
+          <thead>
+            <tr>
+              <th>תאריך</th>
+              <th>שדה</th>
+              <th>ערך קודם</th>
+              <th>ערך חדש</th>
+              <th>משתמש</th>
+              <th>תיאור שינוי</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CSS & JS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/v/bs5/dt-2.0.8/datatables.min.css"/>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/v/bs5/dt-2.0.8/datatables.min.js"></script>
+
+<script>
+$(function(){
+  let dt = $('#tbl').DataTable({
+    paging:true, pageLength:25, responsive:true, searching:false,
+    order:[[0,'desc']],
+    columns:[
+  {data:'id'},
+  {data:'name'},
+  {data:'description'},
+  {data:'category'},
+  {data:'purchase_date'},
+  {data:'subsidiaries', render:(data)=>{
+    if(!data) return '';
+    return data.split(',').map(x=>x.trim()).join('<br>');
+  }},
+  {data:'renewal_last'},
+  {data:'renewal_next', render:(data)=>{
+    if(!data) return '';
+    const today = new Date();
+    const next = new Date(data);
+    let monthsDiff = (next.getFullYear() - today.getFullYear()) * 12 + (next.getMonth() - today.getMonth());
+    if(monthsDiff < 3){
+      return `<span style="color:red; font-weight:bold;">${data}</span>`;
+    }
+    return data;
+  }},
+  {data:'last_cost'},
+  {data:null, orderable:false, render:(row)=>{
+    return `
+      <a class="btn btn-sm btn-outline-primary" title="עדכון" href="/software/edit/${row.id}">
+        <i class="bi bi-pencil-square"></i>
+      </a>
+      <button class="btn btn-sm btn-outline-secondary btn-history" data-id="${row.id}">היסטוריה</button>
+    `;
+  }}
+]
+
+  });
+
+  function load(){
+    const q = $('#q').val();
+    const selectedSubs = $('#subsidiariesFilter').val() || [];
+    $.getJSON('/api/software',{q:q}, function(rows){
+      if(selectedSubs.length>0){
+        rows = rows.filter(r=>{
+          if(!r.subsidiaries) return false;
+          const subs = r.subsidiaries.split(',').map(x=>x.trim());
+          return selectedSubs.some(s=>subs.includes(s));
+        });
+      }
+      dt.clear().rows.add(rows).draw();
+    });
+  }
+
+  $('#q,#subsidiariesFilter').on('keyup change', load);
+  load();
+
+  // טעינת היסטוריה
+  $('#tbl').on('click','.btn-history', function(){
+    const id = $(this).data('id');
+    $.getJSON('/api/software/history/'+id,function(rows){
+      const tbody = $('#historyTable tbody');
+      tbody.empty();
+      rows.forEach(r=>{
+        tbody.append(`
+          <tr>
+            <td>${r.changed_at}</td>
+            <td>${r.field_name}</td>
+            <td>${r.old_value}</td>
+            <td>${r.new_value}</td>
+            <td>${r.user_name}</td>
+            <td>${r.change_description}</td>
+          </tr>
+        `);
+      });
+      $('#historyModal').modal('show');
+    });
+  });
+});
+
+function getUrlParam(name) {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(name);
+}
+
+function load(){
+  const q = $('#q').val();
+  const expiring = getUrlParam("expiring");
+  $.getJSON('/api/software',{q:q, expiring:expiring}, function(rows){
+    // ... שאר הקוד שלך
+    dt.clear().rows.add(rows).draw();
+  });
+}
+
+</script>
+{% endblock %}

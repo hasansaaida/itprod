@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>קליטת טונר חדש</h2>
+    <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="mb-3">
+            <label class="form-label">מספר סידורי</label>
+            <input type="text" name="serial_number" class="form-control" placeholder="אם ריק, יווצר אוטומטית">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">דגם</label>
+            <input type="text" name="model" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">מתאים למדפסת</label>
+            <select name="printer_type" class="form-select" required>
+                <option value="">-- בחר דגם --</option>
+                {% for printer in printer_models %}
+                    <option value="{{ printer[1] }}">{{ printer[1] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">ספק</label>
+            <select name="vendor_id" class="form-select">
+                <option value="">-- בחר ספק --</option>
+                {% for vendor in vendors %}
+                    <option value="{{ vendor.id }}">{{ vendor.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-success">שמור</button>
+        <a href="{{ url_for('toners_list') }}" class="btn btn-secondary">ביטול</a>
+    </form>
+</div>
+{% endblock %}
